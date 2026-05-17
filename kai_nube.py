@@ -1,41 +1,36 @@
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 
 st.set_page_config(page_title="Kai - IA Real", layout="wide")
-st.title("🌊 Kai - Asistente con IA Real")
+st.title("🌊 Kai - Asistente con IA Real (Gratis)")
 
-# ========== CONFIGURACIÓN ==========
+# Configurar Gemini
 try:
-    DEEPSEEK_API_KEY = st.secrets["DEEPSEEK_API_KEY"]
-    st.success("✅ API Key cargada desde Secrets")
-except Exception as e:
-    st.error(f"❌ Error al cargar Secrets: {e}")
+    GEMINI_API_KEY = st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"]
+    genai.configure(api_key=GEMINI_API_KEY)
+    modelo = genai.GenerativeModel('gemini-1.5-flash')
+    st.success("✅ Gemini API conectada (Completamente Gratis)")
+except:
+    st.error("❌ No se encontró GEMINI_API_KEY en Secrets")
     st.stop()
 
-cliente = OpenAI(
-    api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com/v1"
-)
-
 def responder_con_ia(mensaje, historial):
-    messages = [
-        {"role": "system", "content": "Eres Kai, un asistente amigable. Hablas de forma natural y cálida. Usas emojis ocasionalmente."}
-    ]
+    # Construir contexto
+    contexto = ""
+    for msg in historial[-5:]:
+        contexto += f"Usuario: {msg['usuario']}\nKai: {msg['respuesta']}\n"
     
-    for msg in historial[-10:]:
-        messages.append({"role": "user", "content": msg["usuario"]})
-        messages.append({"role": "assistant", "content": msg["respuesta"]})
-    
-    messages.append({"role": "user", "content": mensaje})
-    
+    prompt = f"""Eres Kai, un asistente amigable y conversacional.
+Hablas como un amigo, usas emojis ocasionalmente.
+Llamas al usuario por su nombre si lo sabes.
+
+{contexto}
+Usuario: {mensaje}
+Kai:"""
+
     try:
-        respuesta = cliente.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages,
-            temperature=0.8,
-            max_tokens=300
-        )
-        return respuesta.choices[0].message.content
+        respuesta = modelo.generate_content(prompt)
+        return respuesta.text
     except Exception as e:
         return f"🌊 Error: {str(e)}"
 
@@ -58,6 +53,7 @@ if st.button("Enviar") and prompt:
 
 with st.sidebar:
     st.markdown("### 🌊 Kai")
+    st.markdown("✅ **Gratis** | Sin tarjeta | Sin límites")
     if st.button("Limpiar conversación"):
         st.session_state.historial = []
         st.rerun()
