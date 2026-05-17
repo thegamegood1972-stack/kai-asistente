@@ -1,46 +1,132 @@
-# kai_nube.py - Entiende preguntas complejas
-import streamlit as st
-import requests
+con f() siendo una funcion no lineal.
 
-st.set_page_config(page_title="Kai - Asistente IA", layout="wide")
+**Encontraras mas detalles en:** Wikipedia: Sistema no lineal
+"""
 
-st.title("🌊 Kai - Asistente de IA")
-st.markdown("Entiendo preguntas como: *¿puedes darme la formula de sistema no lineal?*")
+# ========== EXTRAER TERMINO ==========
+def extraer_tema(pregunta):
+    p = pregunta.lower().strip()
+    
+    eliminar = [
+        "puedes darme la", "puedes darme", "podrias darme", "dame la", "dame el",
+        "cual es la", "cual es el", "que es", "que son", "explicame", "defineme",
+        "como funciona", "formula de", "para que sirve", "necesito saber", "quisiera saber", "dime"
+    ]
+    
+    for e in eliminar:
+        p = p.replace(e, "")
+    
+    p = p.strip().strip("?¿!¡.:;")
+    
+    mapeo = {
+        "sistema no lineal": "sistema no lineal",
+        "sistemas no lineales": "sistema no lineal",
+        "redes neurales": "redes neuronales",
+        "red neuronal": "red neuronal artificial",
+        "ia": "inteligencia artificial"
+    }
+    
+    for clave, valor in mapeo.items():
+        if clave in p:
+            return valor
+    
+    return p if len(p) > 2 else ""
 
-# ========== BASE DE CONOCIMIENTO ==========
-def dar_codigo_generico(tema):
-    tema_lower = tema.lower()
-    if "saludo" in tema_lower or "hola" in tema_lower:
-        return """**Codigo Python - Saludo simple**
+# ========== BUSQUEDA EN WIKIPEDIA ==========
+def buscar_en_wikipedia(tema, usuario):
+    if not tema or len(tema) < 3:
+        return f"🌊 {usuario}, ¿que quieres saber? Por ejemplo: 'sistema no lineal', 'inteligencia artificial'"
+    
+    try:
+        url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{tema.replace(' ', '_')}"
+        r = requests.get(url, headers={"User-Agent": "KaiBot"})
+        
+        if r.status_code == 200:
+            data = r.json()
+            if "extract" in data and data["extract"]:
+                titulo = data.get("title", tema)
+                extracto = data["extract"][:800]
+                return f"**{titulo}**\n\n{extracto}\n\n📚 Wikipedia"
+        
+        url_buscar = f"https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch={tema}&format=json&origin=*"
+        r = requests.get(url_buscar, headers={"User-Agent": "KaiBot"})
+        if r.status_code == 200:
+            data = r.json()
+            resultados = data.get("query", {}).get("search", [])
+            if resultados:
+                primer = resultados[0]["title"]
+                snippet = resultados[0].get("snippet", "")[:500]
+                return f"**{primer}**\n\n{snippet}\n\n📚 Wikipedia"
+        
+        return f"No encontre informacion sobre '{tema}'. Prueba con 'sistema no lineal'."
+    except:
+        return "Error de conexion. Intenta de nuevo."
 
-```python
-nombre = input("¿Como te llamas? ")
-print(f"¡Hola {nombre}! Bienvenido a Python")
-```"""
-    return dar_codigo_red_neuronal()
+# ========== DETECTAR INTENCION ==========
+def detectar_intencion(mensaje):
+    m = mensaje.lower()
+    
+    if any(p in m for p in ["codigo", "codigo", "programa", "dame un"]):
+        return "codigo"
+    
+    if "formula" in m or "formula" in m:
+        if "sistema no lineal" in m:
+            return "formula_snl"
+    
+    if any(p in m for p in ["hola", "buenos dias", "buenas tardes"]):
+        return "saludo"
+    
+    if any(p in m for p in ["excelente", "gracias", "genial", "perfecto"]):
+        return "aprobacion"
+    
+    return "definicion"
 
-def dar_codigo_red_neuronal():
-    return """**Codigo Python - Red Neuronal Simple**
+# ========== RESPUESTAS ==========
+def responder(mensaje, usuario):
+    intencion = detectar_intencion(mensaje)
+    
+    if intencion == "saludo":
+        return f"🌊 ¡Hola {usuario}! Preguntame sobre sistemas no lineales, inteligencia artificial o pideme codigo Python. 😊"
+    
+    if intencion == "aprobacion":
+        return f"🌊 ¡Me alegra, {usuario}! ¿Necesitas alguna formula o concepto mas? 💙"
+    
+    if intencion == "codigo":
+        return dar_codigo_generico(mensaje)
+    
+    if intencion == "formula_snl":
+        return dar_formula_sistema_no_lineal()
+    
+    tema = extraer_tema(mensaje)
+    return buscar_en_wikipedia(tema, usuario)
 
-```python
-import numpy as np
+USUARIO = "Giovanni"
 
-class RedNeuronal:
-    def __init__(self, entradas, salidas):
-        self.pesos = np.random.randn(entradas, salidas) * 0.1
-    def activacion(self, x):
-        return 1 / (1 + np.exp(-x))
-    def predecir(self, entrada):
-        return self.activacion(np.dot(entrada, self.pesos))
+# ========== INTERFAZ ==========
+if 'historial' not in st.session_state:
+    st.session_state.historial = []
 
-nn = RedNeuronal(2, 1)
-print(f"Prediccion: {nn.predecir([0.5, 0.8])}")
-```"""
+for msg in st.session_state.historial[-30:]:
+    st.markdown(f"**👤 Tu:** {msg['usuario']}")
+    st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
+    st.markdown("---")
 
-# ========== FORMULAS MATEMATICAS ==========
-def dar_formula_sistema_no_lineal():
-    return """**Sistemas No Lineales - Concepto y Ejemplo**
+prompt = st.text_input("", placeholder="Ej: ¿puedes darme la formula de sistema no lineal? / define inteligencia artificial / hola", key="input_msg", label_visibility="collapsed")
 
-No existe una **formula unica** para sistemas no lineales, ya que cada sistema se describe con ecuaciones especificas.
+if st.button("Enviar") and prompt:
+    with st.spinner("Kai esta pensando..."):
+        respuesta = responder(prompt, USUARIO)
+    st.session_state.historial.append({"usuario": prompt, "respuesta": respuesta})
+    st.rerun()
 
-**Ejemplo de ecuacion no lineal:**
+with st.sidebar:
+    st.markdown("### 🌊 Kai")
+    st.markdown("**Ejemplos:**")
+    st.markdown("- ¿puedes darme la formula de sistema no lineal?")
+    st.markdown("- define inteligencia artificial")
+    st.markdown("- que son redes neuronales")
+    st.markdown("- dame codigo de saludo")
+    st.markdown("---")
+    if st.button("Limpiar conversacion"):
+        st.session_state.historial = []
+        st.rerun()
