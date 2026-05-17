@@ -1,59 +1,36 @@
 import streamlit as st
-import google.generativeai as genai
 
-st.set_page_config(page_title="Kai - IA Real", layout="wide")
-st.title("🌊 Kai - Asistente con IA Real (Gratis)")
+st.set_page_config(page_title="Prueba de Secrets", layout="wide")
+st.title("🔧 Diagnóstico de Secrets")
 
-# Configurar Gemini
+# Mostrar todas las claves disponibles en Secrets
+st.write("### Claves disponibles en Secrets:")
+
 try:
-    GEMINI_API_KEY = st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"]
-    genai.configure(api_key=GEMINI_API_KEY)
-    modelo = genai.GenerativeModel('gemini-1.5-flash')
-    st.success("✅ Gemini API conectada (Completamente Gratis)")
-except:
-    st.error("❌ No se encontró GEMINI_API_KEY en Secrets")
-    st.stop()
-
-def responder_con_ia(mensaje, historial):
-    # Construir contexto
-    contexto = ""
-    for msg in historial[-5:]:
-        contexto += f"Usuario: {msg['usuario']}\nKai: {msg['respuesta']}\n"
+    # Intentar listar todas las claves
+    todas_las_claves = list(st.secrets.keys())
+    st.write(f"Claves encontradas: {todas_las_claves}")
     
-    prompt = f"""Eres Kai, un asistente amigable y conversacional.
-Hablas como un amigo, usas emojis ocasionalmente.
-Llamas al usuario por su nombre si lo sabes.
+    if "GEMINI_API_KEY" in st.secrets:
+        st.success("✅ GEMINI_API_KEY ENCONTRADA en Secrets")
+        # Mostrar solo los primeros caracteres por seguridad
+        clave = st.secrets["GEMINI_API_KEY"]
+        st.write(f"La clave comienza con: {clave[:15]}...")
+    else:
+        st.error("❌ GEMINI_API_KEY NO encontrada en Secrets")
+        st.write("Las claves disponibles son:", todas_las_claves)
 
-{contexto}
-Usuario: {mensaje}
-Kai:"""
+except Exception as e:
+    st.error(f"Error al leer Secrets: {e}")
 
-    try:
-        respuesta = modelo.generate_content(prompt)
-        return respuesta.text
-    except Exception as e:
-        return f"🌊 Error: {str(e)}"
+st.markdown("---")
+st.markdown("### Solución:")
+st.markdown("""
+1. Ve a https://share.streamlit.io
+2. Entra a tu app
+3. Haz clic en **Settings** (tres puntos → Settings)
+4. Ve a la pestaña **Secrets**
+5. Agrega exactamente:
 
-# ========== INTERFAZ ==========
-if 'historial' not in st.session_state:
-    st.session_state.historial = []
-
-for msg in st.session_state.historial[-30:]:
-    st.markdown(f"**👤 Tu:** {msg['usuario']}")
-    st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
-    st.markdown("---")
-
-prompt = st.text_input("", placeholder="Ej: Hola Kai, ¿cómo estás?", key="input_msg", label_visibility="collapsed")
-
-if st.button("Enviar") and prompt:
-    with st.spinner("🌊 Kai está pensando..."):
-        respuesta = responder_con_ia(prompt, st.session_state.historial)
-    st.session_state.historial.append({"usuario": prompt, "respuesta": respuesta})
-    st.rerun()
-
-with st.sidebar:
-    st.markdown("### 🌊 Kai")
-    st.markdown("✅ **Gratis** | Sin tarjeta | Sin límites")
-    if st.button("Limpiar conversación"):
-        st.session_state.historial = []
-        st.rerun()
+```toml
+GEMINI_API_KEY = "AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"
