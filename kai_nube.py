@@ -1,7 +1,20 @@
-con f() siendo una funcion no lineal.
+import streamlit as st
+import requests
 
-**Wikipedia:** Sistema no lineal
-"""
+st.set_page_config(page_title="Kai - Asistente IA", layout="wide")
+
+st.title("🌊 Kai - Asistente de IA")
+
+# ========== CODIGOS PYTHON ==========
+def dar_codigo_saludo():
+    return "**Codigo Python - Saludo simple**\n\n```python\nnombre = input('¿Como te llamas? ')\nprint(f'¡Hola {nombre}! Bienvenido a Python')\n```"
+
+def dar_codigo_red_neuronal():
+    return "**Codigo Python - Red Neuronal Simple**\n\n```python\nimport numpy as np\n\nclass RedNeuronal:\n    def __init__(self, entradas, salidas):\n        self.pesos = np.random.randn(entradas, salidas) * 0.1\n    \n    def activacion(self, x):\n        return 1 / (1 + np.exp(-x))\n    \n    def predecir(self, entrada):\n        return self.activacion(np.dot(entrada, self.pesos))\n\nnn = RedNeuronal(2, 1)\nprint(f'Prediccion: {nn.predecir([0.5, 0.8])}')\n```"
+
+# ========== FORMULA SISTEMA NO LINEAL ==========
+def dar_formula_snl():
+    return "**Sistemas No Lineales**\n\nNo existe una formula unica. Ejemplo:\n```\ndx/dt = x^2 - 1\ndy/dt = x*y + y\n```\nCaracteristica: La salida no es proporcional a la entrada.\n\nWikipedia: Sistema no lineal"
 
 # ========== EXTRAER TEMA ==========
 def extraer_tema(pregunta):
@@ -72,7 +85,7 @@ def responder(mensaje, usuario):
     intencion = detectar_intencion(mensaje)
     
     if intencion == "saludo":
-        return f"🌊 ¡Hola {usuario}! Preguntame sobre sistemas no lineales, inteligencia artificial o pideme codigo Python."
+        return f"🌊 ¡Hola {usuario}! ¿Que quieres saber? Puedo darte formulas o codigo Python."
     
     if intencion == "aprobacion":
         return f"🌊 ¡Me alegra, {usuario}! ¿Necesitas algo mas?"
