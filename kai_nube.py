@@ -1,22 +1,20 @@
-# kai_nube.py - Versión que responde TODO tipo de solicitud
+# kai_nube.py - Búsqueda de definiciones CORREGIDA
 import streamlit as st
 import requests
 
 st.set_page_config(page_title="Kai - Asistente IA", layout="wide")
 
 st.title("🌊 Kai - Asistente de IA")
-st.markdown("Puedo: **dar código Python**, **definir conceptos**, **explicar temas** y **conversar**.")
+st.markdown("Puedo: **definir conceptos**, **dar código Python**, **explicar temas** y **conversar**.")
 
 # ========== BASE DE CONOCIMIENTO ==========
 def dar_codigo_generico(tema):
-    """Devuelve código Python según el tema solicitado"""
     tema_lower = tema.lower()
     
     if "hola" in tema_lower or "saludo" in tema_lower:
         return """**Código Python - Saludo simple**
 
 ```python
-# Programa de saludo en Python
 nombre = input("¿Cómo te llamas? ")
 print(f"¡Hola {nombre}! Bienvenido a Python")
 ```"""
@@ -25,7 +23,6 @@ print(f"¡Hola {nombre}! Bienvenido a Python")
         return """**Código Python - Calculadora simple**
 
 ```python
-# Calculadora básica
 def calculadora():
     print("1. Suma")
     print("2. Resta")
@@ -45,21 +42,11 @@ calculadora()
         return """**Código Python - Listas y bucles**
 
 ```python
-# Ejemplo de listas en Python
 frutas = ["manzana", "pera", "uva", "naranja"]
-
-print("Mis frutas favoritas:")
 for fruta in frutas:
     print(f"- {fruta}")
-
-# Agregar una fruta
-frutas.append("sandía")
-print(f"\\nAhora tengo {len(frutas)} frutas")
 ```"""
 
-    if "red neuronal" in tema_lower or "neural" in tema_lower:
-        return dar_codigo_red_neuronal()
-    
     return dar_codigo_red_neuronal()
 
 def dar_codigo_red_neuronal():
@@ -84,81 +71,81 @@ entrada = np.array([0.5, 0.8])
 print(f"Predicción: {nn.predecir(entrada)}")
 ```"""
 
-def dar_explicacion():
-    return """**¿Cómo funciona una red neuronal?**
-
-Una red neuronal artificial aprende ajustando sus "pesos" (conexiones entre neuronas). El proceso es:
-
-1. **Entrada:** Recibe datos (ej: píxeles de una imagen)
-2. **Propagación:** La señal viaja a través de las capas
-3. **Cálculo del error:** Compara su predicción con la respuesta correcta
-4. **Ajuste (retropropagación):** Modifica los pesos para mejorar
-5. **Repite:** Hasta que el error sea pequeño
-
-**Analogía:** Es como aprender a andar en bicicleta. Al principio te caes (error), pero ajustas tu equilibrio (pesos) hasta que lo logras."""
-
-# ========== DETECTAR INTENCIÓN MEJORADA ==========
+# ========== DETECTAR INTENCIÓN ==========
 def detectar_intencion(mensaje):
     m = mensaje.lower()
     
-    # 1. Código Python (cualquier solicitud de código)
-    if any(p in m for p in ["codigo", "código", "programa", "script", "implementar", 
-                            "dame un", "dame codigo", "escribe un", "crea un"]):
+    # 1. Código Python
+    if any(p in m for p in ["codigo", "código", "programa", "script", "dame un", "dame codigo", "escribe un"]):
         return "codigo"
     
-    # 2. Explicación didáctica
-    if any(p in m for p in ["explica", "cómo funciona", "explicame", "qué es"]):
-        return "explicacion"
-    
-    # 3. Saludos
+    # 2. Saludos
     if any(p in m for p in ["hola", "buenos dias", "buenas tardes", "buenas noches", "saludos"]):
         return "saludo"
     
-    # 4. Aprobación/agradecimiento
+    # 3. Aprobación/agradecimiento
     if any(p in m for p in ["excelente", "perfecto", "genial", "gracias", "bien", "me gusta"]):
         return "aprobacion"
     
-    # 5. Información/conceptos
-    if any(p in m for p in ["que es", "que son", "definición", "significado"]):
+    # 4. Definición (¡CORREGIDO!)
+    if any(p in m for p in ["define", "definición", "significado", "que es", "qué es", 
+                            "que son", "qué son", "dime que", "explica que", "explicame que"]):
         return "definicion"
     
-    # 6. Por defecto: buscar información
-    return "buscar"
+    # 5. Por defecto
+    return "definicion"
 
-# ========== CORRECCIÓN ORTOGRÁFICA ==========
-def corregir_termino(termino):
-    t = termino.lower().strip()
-    correcciones = {
-        "redes neurales": "redes neuronales",
-        "neurales": "neuronales",
-    }
-    for incorrecto, correcto in correcciones.items():
-        if incorrecto in t:
-            return correcto
-    return t
-
+# ========== EXTRAER TÉRMINO DE BÚSQUEDA ==========
 def extraer_termino(mensaje):
-    m = mensaje.lower()
-    for p in ["buscame", "busca", "encuentrame", "todo lo relacionado con", "que es", "que son", "definicion de"]:
-        m = m.replace(p, "")
-    m = m.strip(" ?.,;:!").strip()
-    return corregir_termino(m) if len(m) > 3 else m
+    m = mensaje.lower().strip()
+    
+    # Eliminar frases comunes
+    eliminar = [
+        "define", "definición", "definicion", "significado",
+        "dime que", "explica que", "explicame que", "que es", "qué es",
+        "que son", "qué son", "buscame", "busca", "encuentrame", "investiga"
+    ]
+    
+    for e in eliminar:
+        m = m.replace(e, "")
+    
+    # Limpiar
+    m = m.strip().strip(" ?.,;:!¿¡")
+    
+    # Correcciones ortográficas
+    if "redes neurales" in m or "neurales" in m:
+        m = "redes neuronales"
+    if m == "redes neuronales":
+        m = "red neuronal artificial"
+    
+    return m if len(m) > 2 else ""
 
 # ========== BÚSQUEDA EN WIKIPEDIA ==========
-def buscar_wikipedia(termino):
+def buscar_definicion(termino):
     if not termino or len(termino) < 3:
-        return "¿Qué quieres buscar? Por ejemplo: 'redes neuronales', 'inteligencia artificial'"
-    
-    if termino == "redes neuronales":
-        termino = "red neuronal artificial"
+        return "¿Qué quieres que defina? Por ejemplo: 'inteligencia artificial', 'redes neuronales'"
     
     try:
         url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{termino.replace(' ', '_')}"
         r = requests.get(url, headers={"User-Agent": "KaiBot"})
+        
         if r.status_code == 200:
             data = r.json()
-            return f"**{data.get('title', termino)}**\n\n{data.get('extract', '')[:700]}\n\n📚 Fuente: Wikipedia"
-        return f"No encontré información sobre '{termino}'. Prueba con otro término."
+            titulo = data.get('title', termino)
+            extracto = data.get('extract', '')[:700]
+            return f"**{titulo}**\n\n{extracto}\n\n📚 Fuente: Wikipedia"
+        
+        # Búsqueda alternativa
+        url_buscar = f"https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch={termino}&format=json&origin=*"
+        r = requests.get(url_buscar, headers={"User-Agent": "KaiBot"})
+        if r.status_code == 200:
+            data = r.json()
+            resultados = data.get("query", {}).get("search", [])
+            if resultados:
+                primer = resultados[0]["title"]
+                return f"No encontré '{termino}'. ¿Quizás te refieres a **{primer}**? Escríbelo para buscarlo."
+        
+        return f"No encontré información sobre '{termino}'. Prueba con 'inteligencia artificial' o 'redes neuronales'."
     except:
         return "Error de conexión. Intenta de nuevo."
 
@@ -166,28 +153,18 @@ def buscar_wikipedia(termino):
 def responder(mensaje, usuario):
     intencion = detectar_intencion(mensaje)
     
-    # Saludos
     if intencion == "saludo":
-        return f"🌊 ¡Hola {usuario}! Puedes pedirme **código Python** (ej: 'dame código de saludo'), **definiciones** (ej: 'qué es IA') o **explicaciones**. 😊"
+        return f"🌊 ¡Hola {usuario}! Puedo **definir conceptos** (ej: 'define inteligencia artificial') o **dar código Python** (ej: 'dame código de saludo'). 😊"
     
-    # Aprobación
     if intencion == "aprobacion":
-        return f"🌊 ¡Me alegra que te guste, {usuario}! ¿Necesitas algo más? Puedo darte más ejemplos de código. 💙"
+        return f"🌊 ¡Me alegra que te sea útil, {usuario}! ¿Necesitas alguna definición o código más? 💙"
     
-    # Código Python
     if intencion == "codigo":
         return dar_codigo_generico(mensaje)
     
-    # Explicación didáctica
-    if intencion == "explicacion":
-        if "red neuronal" in mensaje.lower() or "neural" in mensaje.lower():
-            return dar_explicacion()
-        else:
-            return buscar_wikipedia(extraer_termino(mensaje))
-    
-    # Búsqueda normal
+    # Definición (intención por defecto)
     termino = extraer_termino(mensaje)
-    return buscar_wikipedia(termino)
+    return buscar_definicion(termino)
 
 # ========== INTERFAZ ==========
 if 'historial' not in st.session_state:
@@ -198,7 +175,7 @@ for msg in st.session_state.historial[-30:]:
     st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
     st.markdown("---")
 
-prompt = st.text_input("", placeholder="Ej: dame código de saludo / qué es inteligencia artificial / redes neuronales / hola", key="input_msg", label_visibility="collapsed")
+prompt = st.text_input("", placeholder="Ej: define inteligencia artificial / dame código de saludo / redes neuronales", key="input_msg", label_visibility="collapsed")
 
 if st.button("Enviar") and prompt:
     with st.spinner("Kai está pensando..."):
@@ -209,10 +186,9 @@ if st.button("Enviar") and prompt:
 with st.sidebar:
     st.markdown("### 🌊 Kai")
     st.markdown("**Ejemplos:**")
+    st.markdown("• define inteligencia artificial")
+    st.markdown("• qué son redes neuronales")
     st.markdown("• dame código de saludo")
-    st.markdown("• dame código de calculadora")
-    st.markdown("• qué es inteligencia artificial")
-    st.markdown("• redes neuronales")
     st.markdown("• hola")
     st.markdown("---")
     if st.button("Limpiar conversación"):
