@@ -24,13 +24,12 @@ except Exception as e:
     st.error(f"Error al leer Secrets: {e}")
 
 st.markdown("---")
-st.markdown("### Solución:")
-st.markdown("""
-1. Ve a https://share.streamlit.io
-2. Entra a tu app
-3. Haz clic en **Settings** (tres puntos → Settings)
-4. Ve a la pestaña **Secrets**
-5. Agrega exactamente:
-
-```toml
-GEMINI_API_KEY = "AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"
+st.markdown("### Solucion:")
+st.markdown("1. Ve a https://share.streamlit.io")
+st.markdown("2. Entra a tu app")
+st.markdown("3. Haz clic en Settings (tres puntos -> Settings)")
+st.markdown("4. Ve a la pestaña Secrets")
+st.markdown("5. Agrega exactamente:")
+st.code('GEMINI_API_KEY = "tu-clave-real-de-gemini"', language="toml")
+st.markdown("6. Haz clic en Save")
+st.markdown("7. Reinicia la app (tres puntos -> Reboot)")
