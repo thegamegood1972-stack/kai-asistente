@@ -1,72 +1,46 @@
-con **f(·)** siendo una función **no lineal**.
+# kai_nube.py - Entiende preguntas complejas
+import streamlit as st
+import requests
 
-**Encontrarás más detalles en:** Wikipedia: **Sistema no lineal**"""
+st.set_page_config(page_title="Kai - Asistente IA", layout="wide")
 
-# ========== DETECTAR INTENCIÓN ==========
-def detectar_intencion(mensaje):
-    m = mensaje.lower()
-    
-    if any(p in m for p in ["codigo", "código", "programa", "dame un"]):
-        return "codigo"
-    
-    if "formula" in m or "fórmula" in m:
-        if "sistema no lineal" in m:
-            return "formula_snl"
-    
-    if any(p in m for p in ["hola", "buenos dias", "buenas tardes"]):
-        return "saludo"
-    
-    if any(p in m for p in ["excelente", "gracias", "genial", "perfecto"]):
-        return "aprobacion"
-    
-    return "definicion"
+st.title("🌊 Kai - Asistente de IA")
+st.markdown("Entiendo preguntas como: *¿puedes darme la formula de sistema no lineal?*")
 
-# ========== RESPUESTAS ==========
-def responder(mensaje, usuario):
-    intencion = detectar_intencion(mensaje)
-    m = mensaje.lower()
-    
-    if intencion == "saludo":
-        return f"🌊 ¡Hola {usuario}! Pregúntame sobre **sistemas no lineales**, **inteligencia artificial** o pídeme **código Python**. 😊"
-    
-    if intencion == "aprobacion":
-        return f"🌊 ¡Me alegra, {usuario}! ¿Necesitas alguna fórmula o concepto más? 💙"
-    
-    if intencion == "codigo":
-        return dar_codigo_generico(mensaje)
-    
-    if intencion == "formula_snl":
-        return dar_formula_sistema_no_lineal()
-    
-    # Extraer tema y buscar
-    tema = extraer_tema(mensaje)
-    return buscar_en_wikipedia(tema, usuario)
+# ========== BASE DE CONOCIMIENTO ==========
+def dar_codigo_generico(tema):
+    tema_lower = tema.lower()
+    if "saludo" in tema_lower or "hola" in tema_lower:
+        return """**Codigo Python - Saludo simple**
 
-# ========== INTERFAZ ==========
-if 'historial' not in st.session_state:
-    st.session_state.historial = []
+```python
+nombre = input("¿Como te llamas? ")
+print(f"¡Hola {nombre}! Bienvenido a Python")
+```"""
+    return dar_codigo_red_neuronal()
 
-for msg in st.session_state.historial[-30:]:
-    st.markdown(f"**👤 Tú:** {msg['usuario']}")
-    st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
-    st.markdown("---")
+def dar_codigo_red_neuronal():
+    return """**Codigo Python - Red Neuronal Simple**
 
-prompt = st.text_input("", placeholder="Ej: ¿puedes darme la fórmula de sistema no lineal? / define inteligencia artificial / hola", key="input_msg", label_visibility="collapsed")
+```python
+import numpy as np
 
-if st.button("Enviar") and prompt:
-    with st.spinner("Kai está pensando..."):
-        respuesta = responder(prompt, "Giovanni")
-    st.session_state.historial.append({"usuario": prompt, "respuesta": respuesta})
-    st.rerun()
+class RedNeuronal:
+    def __init__(self, entradas, salidas):
+        self.pesos = np.random.randn(entradas, salidas) * 0.1
+    def activacion(self, x):
+        return 1 / (1 + np.exp(-x))
+    def predecir(self, entrada):
+        return self.activacion(np.dot(entrada, self.pesos))
 
-with st.sidebar:
-    st.markdown("### 🌊 Kai")
-    st.markdown("**Ejemplos:**")
-    st.markdown("• ¿puedes darme la fórmula de sistema no lineal?")
-    st.markdown("• define inteligencia artificial")
-    st.markdown("• qué son redes neuronales")
-    st.markdown("• dame código de saludo")
-    st.markdown("---")
-    if st.button("Limpiar conversación"):
-        st.session_state.historial = []
-        st.rerun()
+nn = RedNeuronal(2, 1)
+print(f"Prediccion: {nn.predecir([0.5, 0.8])}")
+```"""
+
+# ========== FORMULAS MATEMATICAS ==========
+def dar_formula_sistema_no_lineal():
+    return """**Sistemas No Lineales - Concepto y Ejemplo**
+
+No existe una **formula unica** para sistemas no lineales, ya que cada sistema se describe con ecuaciones especificas.
+
+**Ejemplo de ecuacion no lineal:**
