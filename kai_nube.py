@@ -6,28 +6,21 @@ st.title("🌊 Kai - Asistente con IA Real (Gratis)")
 
 # ========== CONFIGURAR GEMINI ==========
 try:
-    GEMINI_API_KEY = st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"]
+    # Esta línea lee la clave desde Secrets - NO LA CAMBIES
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=GEMINI_API_KEY)
     modelo = genai.GenerativeModel('gemini-1.5-flash')
     st.success("✅ Gemini API conectada correctamente")
 except Exception as e:
-    st.error(f"❌ Error de conexión: {e}")
+    st.error(f"❌ Error: {e}")
     st.stop()
 
-# ========== FUNCIÓN PRINCIPAL ==========
 def responder(mensaje, historial):
-    # Construir contexto de la conversación
     contexto = ""
     for msg in historial[-5:]:
         contexto += f"Usuario: {msg['usuario']}\nKai: {msg['respuesta']}\n"
     
-    prompt = f"""Eres Kai, un asistente personal amigable y conversacional.
-Características:
-- Hablas como un amigo cercano
-- Usas emojis ocasionalmente (😊, 🌊, 💙)
-- Llamas al usuario por su nombre (Giovanni)
-- Respondes de forma natural y cálida
-- Si te preguntan cómo estás, dices que estás feliz de ayudar
+    prompt = f"""Eres Kai, un asistente amigable. Hablas como un amigo.
 
 {contexto}
 Usuario: {mensaje}
@@ -37,19 +30,16 @@ Kai:"""
         respuesta = modelo.generate_content(prompt)
         return respuesta.text
     except Exception as e:
-        return f"🌊 Lo siento, tuve un error: {str(e)}"
+        return f"🌊 Error: {str(e)}"
 
-# ========== INTERFAZ ==========
 if 'historial' not in st.session_state:
     st.session_state.historial = []
 
-# Mostrar conversación
 for msg in st.session_state.historial[-30:]:
     st.markdown(f"**👤 Tu:** {msg['usuario']}")
     st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
     st.markdown("---")
 
-# Entrada de texto
 prompt = st.text_input("", placeholder="Escribe tu mensaje...", key="input_msg", label_visibility="collapsed")
 
 if st.button("Enviar") and prompt:
@@ -60,7 +50,6 @@ if st.button("Enviar") and prompt:
 
 with st.sidebar:
     st.markdown("### 🌊 Kai")
-    st.markdown("✅ **Gratis** | IA real | Conversación natural")
     if st.button("Limpiar conversación"):
         st.session_state.historial = []
         st.rerun()
