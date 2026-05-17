@@ -7,7 +7,7 @@ st.title("🌊 Kai - Asistente con IA Real (Gratis)")
 # ========== CONFIGURAR GEMINI ==========
 try:
     # Esta línea lee la clave desde Secrets - NO LA CAMBIES
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    GEMINI_API_KEY = st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"]
     genai.configure(api_key=GEMINI_API_KEY)
     modelo = genai.GenerativeModel('gemini-1.5-flash')
     st.success("✅ Gemini API conectada correctamente")
