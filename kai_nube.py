@@ -1,55 +1,33 @@
 import streamlit as st
 import google.generativeai as genai
 
-st.set_page_config(page_title="Kai - Asistente IA", layout="wide")
-st.title("🌊 Kai - Asistente con IA Real (Gratis)")
+st.set_page_config(page_title="Kai - Asistente", layout="wide")
+st.title("🌊 Kai - Asistente con IA")
 
-# ========== CONFIGURAR GEMINI ==========
+# Configuración de Gemini
 try:
-    # Esta línea lee la clave desde Secrets - NO LA CAMBIES
-    GEMINI_API_KEY = st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"]
-    genai.configure(api_key=GEMINI_API_KEY)
-    modelo = genai.GenerativeModel('gemini-1.5-flash')
-    st.success("✅ Gemini API conectada correctamente")
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    st.success("✅ Conectado a Gemini")
 except Exception as e:
-    st.error(f"❌ Error: {e}")
+    st.error(f"Error de conexión: {e}")
     st.stop()
 
-def responder(mensaje, historial):
-    contexto = ""
-    for msg in historial[-5:]:
-        contexto += f"Usuario: {msg['usuario']}\nKai: {msg['respuesta']}\n"
-    
-    prompt = f"""Eres Kai, un asistente amigable. Hablas como un amigo.
+# Interfaz de chat
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-{contexto}
-Usuario: {mensaje}
-Kai:"""
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    try:
-        respuesta = modelo.generate_content(prompt)
-        return respuesta.text
-    except Exception as e:
-        return f"🌊 Error: {str(e)}"
+if prompt := st.chat_input("Escribe tu mensaje aquí..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-if 'historial' not in st.session_state:
-    st.session_state.historial = []
-
-for msg in st.session_state.historial[-30:]:
-    st.markdown(f"**👤 Tu:** {msg['usuario']}")
-    st.markdown(f"**🌊 Kai:** {msg['respuesta']}")
-    st.markdown("---")
-
-prompt = st.text_input("", placeholder="Escribe tu mensaje...", key="input_msg", label_visibility="collapsed")
-
-if st.button("Enviar") and prompt:
-    with st.spinner("🌊 Kai está pensando..."):
-        respuesta = responder(prompt, st.session_state.historial)
-    st.session_state.historial.append({"usuario": prompt, "respuesta": respuesta})
-    st.rerun()
-
-with st.sidebar:
-    st.markdown("### 🌊 Kai")
-    if st.button("Limpiar conversación"):
-        st.session_state.historial = []
-        st.rerun()
+    with st.chat_message("assistant"):
+        with st.spinner("Pensando..."):
+            response = model.generate_content(prompt)
+            st.markdown(response.text)
+    st.session_state.messages.append({"role": "assistant", "content": response.text})
